@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เครื่องคำนวณ TDEE (พลังงานที่ใช้ต่อวัน) - ตัวอย่าง</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f7f6;
+      max-width: 650px;
+      margin: 30px auto;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      color: #333;
+    }
+    h1 {
+      color: #0056b3;
+      text-align: center;
+      margin-bottom: 25px;
+      font-size: 2em;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #555;
+    }
+    input[type="number"],
+    select {
+      width: calc(100% - 20px);
+      padding: 12px 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+    input[type="number"]:focus,
+    select:focus {
+      border-color: #007bff;
+      outline: none;
+    }
+    button {
+      margin-top: 25px;
+      padding: 12px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      width: 100%;
+      font-size: 1.1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    button + button { /* Style for the reset button */
+        margin-top: 15px;
+        background-color: #6c757d;
+    }
+    button + button:hover {
+        background-color: #5a6268;
+    }
+    .result {
+      margin-top: 30px;
+      padding: 20px;
+      border-radius: 10px;
+      background: #e9f5ff; /* Light blue background for results */
+      border: 1px solid #b3d9ff;
+      color: #004085;
+      font-size: 1.1em;
+    }
+    .result h2 {
+        color: #0056b3;
+        margin-top: 0;
+        margin-bottom: 15px;
+        text-align: center;
+        font-size: 1.6em;
+    }
+    .result p {
+        margin-bottom: 8px;
+    }
+    .result strong {
+        color: #007bff;
+    }
+    .tdee-highlight {
+        font-size: 1.5em;
+        color: #28a745; /* Green for TDEE */
+        font-weight: bold;
+        text-align: center;
+        margin: 15px 0;
+        display: block;
+    }
+    .recommendations {
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px dashed #b3d9ff;
+    }
+    .recommendations p {
+        margin-bottom: 10px;
+        font-size: 1.1em;
+    }
+    .recommendations strong {
+        color: #dc3545; /* Red for weight loss */
+    }
+    .recommendations .gain-weight {
+        color: #ffc107; /* Yellow/Orange for weight gain */
+    }
+    .note {
+        font-size: 0.9em;
+        color: #777;
+        margin-top: 20px;
+        text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>เครื่องคำนวณ TDEE (พลังงานที่ใช้ต่อวัน) - ตัวอย่างข้อมูล</h1>
+
+  <form id="tdeeForm">
+    <label for="gender">เพศ:</label>
+    <select id="gender" name="gender">
+      <option value="male" selected>ชาย</option>
+      <option value="female">หญิง</option>
+    </select>
+
+    <label for="age">อายุ (ปี):</label>
+    <input type="number" id="age" name="age" min="10" max="100" value="30" placeholder="เช่น 30">
+
+    <label for="height">ส่วนสูง (เซนติเมตร):</label>
+    <input type="number" id="height" name="height" value="175" placeholder="เช่น 175">
+
+    <label for="weight">น้ำหนัก (กิโลกรัม):</label>
+    <input type="number" id="weight" name="weight" value="70" placeholder="เช่น 70">
+
+    <label for="activity">ระดับการออกกำลังกาย:</label>
+    <select id="activity" name="activity">
+      <option value="1.2">ไม่ออกกำลังกายเลย</option>
+      <option value="1.375">ออกกำลังกายเล็กน้อย (1-2 วัน/สัปดาห์)</option>
+      <option value="1.55" selected>ออกกำลังกายปานกลาง (3-5 วัน/สัปดาห์)</option>
+      <option value="1.725">ออกกำลังกายหนัก (6-7 วัน/สัปดาห์)</option>
+      <option value="1.9">ออกกำลังกายหนักมาก (เช้า-เย็น หรือทำงานใช้แรง)</option>
+    </select>
+
+    <button type="button" onclick="calculateTDEE()">คำนวณ TDEE</button>
+    <button type="button" onclick="resetForm()">รีเซ็ต</button>
+  </form>
+
+  <div class="result" id="result">
+    <h2>ผลลัพธ์และการแนะนำ</h2>
+    <p>กรุณากรอกข้อมูลเพื่อคำนวณ TDEE ของคุณ</p>
+  </div>
+
+  <div class="note">
+      <p>*การคำนวณนี้เป็นค่าประมาณการ ควรปรึกษาผู้เชี่ยวชาญด้านสุขภาพหรือโภชนาการสำหรับคำแนะนำเฉพาะบุคคล*</p>
+  </div>
+
+  <script>
+    // Automatically calculate TDEE on page load for the pre-filled version
+    document.addEventListener('DOMContentLoaded', calculateTDEE);
+
+    function calculateTDEE() {
+      const gender = document.getElementById('gender').value;
+      const age = parseInt(document.getElementById('age').value);
+      const height = parseFloat(document.getElementById('height').value);
+      const weight = parseFloat(document.getElementById('weight').value);
+      const activity = parseFloat(document.getElementById('activity').value);
+      const resultDiv = document.getElementById('result');
+
+      if (isNaN(age) || isNaN(height) || isNaN(weight) || age <= 0 || height <= 0 || weight <= 0) {
+        resultDiv.innerHTML = `
+          <h2>ผลลัพธ์และการแนะนำ</h2>
+          <p style="color: #dc3545; font-weight: bold;">กรุณากรอกข้อมูล อายุ, ส่วนสูง และน้ำหนัก ให้ครบถ้วนและถูกต้อง (ต้องเป็นตัวเลขที่มากกว่า 0)</p>
+        `;
+        return;
+      }
+
+      let bmr = 0;
+      if (gender === 'male') {
+        bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+      } else {
+        bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161;
+      }
+
+      const tdee = bmr * activity;
+      const reduceWeight = tdee - 500;
+      const gainWeight = tdee + 500;
+
+      resultDiv.innerHTML = `
+        <h2>ผลลัพธ์และการแนะนำ</h2>
+        <p>BMR (อัตราการเผาผลาญพื้นฐาน) ของคุณคือ <strong>${bmr.toFixed(2)} kcal/วัน</strong></p>
+        <p>TDEE (พลังงานที่ใช้ต่อวัน) ของคุณคือ <span class="tdee-highlight">${tdee.toFixed(2)} kcal/วัน</span></p>
+
+        <div class="recommendations">
+            <h3>คำแนะนำ:</h3>
+            <p>- ถ้าต้องการ <strong>ลดน้ำหนัก</strong>: ควรบริโภคประมาณ ${reduceWeight.toFixed(2)} kcal/วัน</p>
+            <p>- ถ้าต้องการ <strong class="gain-weight">เพิ่มน้ำหนัก</strong>: ควรบริโภคประมาณ ${gainWeight.toFixed(2)} kcal/วัน</p>
+        </div>
+      `;
+    }
+
+    function resetForm() {
+        document.getElementById('tdeeForm').reset();
+        document.getElementById('result').innerHTML = `
+            <h2>ผลลัพธ์และการแนะนำ</h2>
+            <p>กรุณากรอกข้อมูลเพื่อคำนวณ TDEE ของคุณ</p>
+        `;
+    }
+  </script>
+</body>
+</html> 
